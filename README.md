@@ -1,158 +1,204 @@
 Identity Repair and Quarantine in Longitudinal Health Data
 
-Independent Undergraduate Research Project
-Research area: Health Informatics, Patient Identity Resolution and Clinical Data Quality
-Intended venue: AAAI 2027 Workshop on Medical World Models (MedWM)
-Author: Hamza Shekhani
-Year: 2026
+A small undergraduate research project exploring how patient-identity
+errors can affect longitudinal health data.
 
-About the Project
+────────
 
-Patient identity errors can affect the quality of longitudinal electronic health records (EHRs). For example, records belonging to different patients may be incorrectly merged, while records belonging to the same patient may be separated.
+About the project
 
-These problems can affect how clinical information is interpreted and potentially influence machine learning models trained on longitudinal health data.
+Health information systems may contain records that are incorrectly
+linked to the same patient or split across different patient identities.
+These errors can make a patient’s medical history incomplete or
+misleading.
 
-This project explores how patient identity errors affect clinical prediction models and compares three approaches to handling corrupted records:
+This project explores a practical question:
 
-1. Naive: Use the corrupted dataset without attempting identity correction.
-2. Quarantine: Exclude records identified as unreliable from model training.
-3. Repair: Use probabilistic record linkage to identify and reconstruct patient records using available demographic information.
+> **When patient identity information is unreliable, is it better to
+> repair the records, quarantine uncertain records, or leave the data
+> unchanged?**
 
-The main question behind the project is whether removing unreliable records is always the best approach, or whether attempting to repair patient identities can preserve useful information for downstream analysis.
+The experiments use synthetic health data to compare these approaches
+and examine how they affect a simple model that predicts future systolic
+blood pressure (SBP).
 
-Research Questions
+This is an exploratory simulation, not a clinical system or a
+validated patient-matching tool.
 
-The experiments explore three questions:
+What the project compares
 
-* How does increasing identity corruption affect longitudinal prediction performance?
-* Does removing unreliable records reduce model performance by limiting the available training data?
-* Can probabilistic record linkage help preserve prediction performance when identity errors are introduced?
+Three approaches are evaluated under different levels of simulated
+identity corruption:
 
-Experimental Approach
+────────
 
-1. Synthetic Dataset
+Approach                            What it does
 
-The project uses synthetic patient data generated with Synthea.
+────────
 
-The final dataset contains 2,672 synthetic patients, filtered to include individuals with 8–12 longitudinal systolic blood pressure (SBP) observations.
+Naive                           Uses the records without attempting
+identity correction.
 
-No real patient records are used.
+Quarantine                      Removes records considered
+unreliable.
 
-2. Introducing Identity Errors
+Repair                          Uses probabilistic record linkage to identify records that may belong together.
 
-Identity corruption is simulated at different rates:
+A clean-data Oracle result is also included as a reference point. It
+represents performance when the original patient identities are known.
 
-0%, 5%, 10%, 20%, 30%, 50%
+How the experiment was set up
 
-The experiments investigate the effects of identity collisions and associated demographic inconsistencies on longitudinal patient records.
+• Data: Synthetic patient records generated using
+Synthea.
+• Sample: 2,672 synthetic patients, with longitudinal systolic
+blood pressure observations selected for the experiment.
+• Corruption levels: 0%, 5%, 10%, 20%, 30% and 50%.
+• Record linkage: An Expectation-Maximisation implementation of
+the Fellegi–Sunter probabilistic record-linkage approach.
+• Matching information: Date of birth, sex and name prefix. The
+true patient identifiers are not used as matching inputs.
+• Prediction task: A GRU model implemented in PyTorch, using
+earlier SBP observations to predict later values.
+• Evaluation: Three-step rollout mean absolute error (MAE),
+averaged over 10 random seeds. Lower MAE indicates lower prediction
+error.
 
-3. Identity Repair
-
-The repair approach uses an implementation of the Fellegi–Sunter probabilistic record linkage method, with Expectation-Maximization (EM) for parameter estimation.
-
-The matching process uses three observable demographic attributes:
-
-* Date of birth
-* Sex
-* Name prefix
-
-Ground-truth patient identifiers are not used as matching inputs. They are reserved for simulation and evaluation purposes.
-
-4. Prediction Model
-
-A Gated Recurrent Unit (GRU) model, implemented using PyTorch, is used to predict longitudinal SBP trajectories.
-
-Model performance is measured using Mean Absolute Error (MAE) over a three-step prediction rollout. Lower MAE indicates lower prediction error.
-
-Each experiment is repeated across 10 independent random seeds. Results are compared against a clean-data baseline, referred to as the Oracle.
+The true synthetic patient identifiers are available for constructing
+and evaluating the simulated corruption, but are kept separate from the
+matching information.
 
 Results
 
-The final v6 experiment produced the following mean MAE values:
+The table below shows the mean MAE at the highest tested corruption
+level (50%).
 
-Approach	Corruption rate	Mean MAE
-Oracle (clean baseline)	0%	0.3435
-Naive	50%	0.3510
-Quarantine	50%	0.3508
-Repair	50%	0.3456
+Approach                              Mean MAE
 
-At 50% corruption, the Naive and Quarantine approaches show higher prediction error than the clean baseline.
+────────
 
-The Repair approach produces a result closer to the Oracle baseline.
+Oracle (clean identity reference)       0.3435
+Repair                                  0.3456
+Quarantine                              0.3508
+Naive                                   0.3510
 
-Paired Comparisons
+At 50% corruption, the repair approach had a lower mean error than the
+naive and quarantine approaches in this experiment. Its result was also
+closer to the clean-data Oracle reference.
 
-At 50% corruption, the paired comparisons reported:
+These results are specific to this synthetic setup. They should not
+be interpreted as proof that record repair will always outperform
+quarantine, or that the approach is ready for use with real patient
+records.
 
-* Quarantine: Mean MAE difference of 0.0073 compared with Oracle; higher error in all 10 seeds.
-* Repair: Mean MAE difference of 0.0021 compared with Oracle; higher error in 8 out of 10 seeds.
+Results figure
 
-These results suggest that, under the conditions simulated in this project, probabilistic repair may preserve more useful longitudinal information than excluding potentially unreliable records.
+If the generated figure is included in the repository, it can be
+displayed here:
 
-Repository Contents
+Experimental results
 
-File	Description
-medwm_v6.py	Main simulation script, including corruption, matching and model evaluation
-plot_fix.py	Script used to generate the results figure
-v6_summary.csv	Aggregated experimental results
-v6_raw.csv	Results from individual experimental runs
-v6_paired_contrasts.csv	Paired comparisons against the Oracle baseline
-synthea_sbp_trajectories.csv	Synthetic longitudinal SBP dataset
-requirements.txt	Required Python packages
+Repository contents
 
-Running the Project
+The repository is intended to include the following files:
 
-Requirements
+────────
 
-* Python 3.9 or later
-* Packages listed in requirements.txt
+File                                Purpose
 
-Install the dependencies:
+────────
+
+medwm_v6.py                       Main experiment script.
+
+plot_fix.py                       Script used to generate the results
+figure.
+
+synthea_sbp_trajectories.csv      Synthetic SBP trajectory data used
+by the experiment.
+
+v6_summary.csv                    Summary results across corruption
+levels.
+
+v6_raw.csv                        Results from individual
+experimental runs.
+
+v6_paired_contrasts.csv           Paired comparisons against the
+clean-data reference.
+
+requirements.txt                  Python package requirements.
+
+v6_results_paper_ready.png        Experimental results figure.
+
+File names may need to be adjusted if the repository contents change.
+
+Running the project
+
+The following commands show the intended workflow. Run them from the
+project folder in a Python environment with the required packages
+installed.
+
+1. Install the dependencies
 
 pip install -r requirements.txt
 
-Run the simulation
-
-Ensure that the synthetic dataset is available in the repository’s root directory.
+2. Run the experiment
 
 python medwm_v6.py --data synthea --csv synthea_sbp_trajectories.csv
 
-Generate the results figure
+3. Generate the figure
 
 python plot_fix.py
 
-The plotting script generates the results visualisation using the experimental outputs.
+The scripts and file names should be checked against the current
+repository before relying on these commands.
 
 Limitations
 
-This project is a simulation-based investigation using synthetic health data. Its findings should not be interpreted as evidence that the same results would necessarily occur in real hospital information systems or deployed health information exchanges.
+There are several important limitations to this project:
 
-The experiments focus on a limited number of demographic attributes and a single clinical variable, systolic blood pressure. Real-world identity resolution involves additional challenges, including incomplete demographic information, inconsistent data entry, changing patient information and differences between healthcare systems.
+• The experiments use synthetic data rather than real hospital or
+health-information-exchange records.
+• The study focuses on a limited set of matching attributes: date of
+birth, sex and name prefix.
+• The prediction task uses one clinical variable, systolic blood
+pressure.
+• The results depend on the simulation design, corruption process,
+matching assumptions and model configuration.
+• The experiment does not establish how the methods would perform in a
+live hospital environment.
+• The findings should be treated as exploratory and would need testing
+with appropriate real-world data before any practical use.
 
-Further testing with more diverse datasets and clinical variables would be needed to understand how well these approaches generalise to practical healthcare settings.
+Development and use of AI tools
 
-Development and AI Assistance
+AI-assisted tools were used extensively during the development of this
+project, particularly for Python implementation, debugging, exploring
+methods and preparing documentation.
 
-This project was undertaken as an independent undergraduate research initiative.
+The research question, choice of problem, experimental objectives and
+overall direction were developed and guided by me. I worked iteratively
+with the tools, reviewed the outputs and considered methodological
+issues as the project developed.
 
-AI-assisted tools were used extensively throughout the development process, particularly for Python implementation, debugging, methodological exploration and documentation.
+I have included this note to describe the development process
+transparently. The code and results should be reviewed and reproduced
+before the work is used or cited.
 
-The research idea, choice of problem, experimental objectives and direction of development were led by the author. The experimental workflow was developed iteratively, with outputs and methodological issues reviewed throughout the process.
+Research status
 
-The repository is shared to document the project, its experimental approach and its results.
+This project is being prepared with the AAAI 2027 Workshop on Medical
+World Models (MedWM) in mind. This indicates an intended submission
+venue only; it should not be read as an acceptance or publication.
 
-Citation
+Reference
 
-If referring to this project, please use the following citation:
+A related project record is available on Zenodo:
 
-@misc{shekhani2026identity,
-  author    = {Shekhani, Hamza},
-  title     = {Identity Trust in Health Information Exchange},
-  year      = {2026},
-  publisher = {Zenodo},
-  doi       = {10.5281/zenodo.22770188}
-}
+Shekhani, H. (2026). Identity Trust in Health Information Exchange.
+Zenodo.
+https://doi.org/10.5281/zenodo.22770188
 
-Acknowledgements
+Acknowledgement
 
-Synthetic patient data were generated using Synthea.
+Synthetic patient data were generated using
+Synthea.
